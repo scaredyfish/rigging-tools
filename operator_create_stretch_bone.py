@@ -33,14 +33,13 @@ def make_stretchy_bone(bone, divisions):
     name = bone.name
     
     new_bones = subdivide_bone(armature, bone, divisions)
-    target_bone = None
+    next_parent = bone
     
     print_current_bones(armature)
     
     for i, child_bone in enumerate(new_bones):
         child_bone.use_connect = False
-        if target_bone:
-            child_bone.parent = target_bone
+        child_bone.parent = next_parent
         
         armature.update_from_editmode()
     
@@ -49,16 +48,24 @@ def make_stretchy_bone(bone, divisions):
         target_bone.tail.xyz = child_bone.tail.xyz + Vector((0, 0.1, 0))
         target_bone.parent = bone
         
+        next_parent = target_bone
+        
+        armature.update_from_editmode()
+        
         pose_bone = armature.pose.bones[child_bone.name]
         stretch_constraint = pose_bone.constraints.new(type="STRETCH_TO")
         stretch_constraint.target = armature
         stretch_constraint.subtarget = target_bone.name
-
+    
+    target_bone.parent = None
+    
+    armature.update_from_editmode()
+    
     pose_bone = armature.pose.bones[bone.name]
     stretch_constraint = pose_bone.constraints.new(type="STRETCH_TO")
     stretch_constraint.target = armature
     stretch_constraint.subtarget = target_bone.name
-    target_bone.parent = None
+    
 
 class MakeStretchyBoneOperator(bpy.types.Operator):
     """Converts a bone to a stretchy bone"""
@@ -79,7 +86,7 @@ class MakeStretchyBoneOperator(bpy.types.Operator):
         return self.execute(context)
 
     def execute(self, context):
-        print(context.selected_editable_bones)
+        print("Running operator:" + self.bl_idname)
         make_stretchy_bone(context.selected_editable_bones[0], self.divisions)
         return {'FINISHED'}
 
