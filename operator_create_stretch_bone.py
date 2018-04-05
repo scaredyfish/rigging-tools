@@ -32,7 +32,12 @@ def make_stretchy_bone(bone, divisions):
     bone.use_deform = False
     
     armature = bpy.context.selected_objects[0]
-    name = bone.name
+    
+    target_bone = armature.data.edit_bones.new(bone.name + '_head')
+    target_bone.head.xyz = bone.head.xyz
+    target_bone.tail.xyz = bone.head.xyz + (0.1 * bone.z_axis)
+    bone.parent = target_bone
+    target_bone.use_deform = False
     
     new_bones = subdivide_bone(armature, bone, divisions)
     next_parent = bone
@@ -78,7 +83,7 @@ class MakeStretchyBoneOperator(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     
-    divisions = bpy.props.IntProperty(name='Divisions', default=1)
+    divisions = bpy.props.IntProperty(name='Divisions', default=2)
 
     @classmethod
     def poll(cls, context):
