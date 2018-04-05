@@ -29,24 +29,28 @@ def subdivide_bone(armature, bone, divisions):
     
 
 def make_stretchy_bone(bone, divisions):
+    bone.use_deform = False
+    
     armature = bpy.context.selected_objects[0]
     name = bone.name
     
     new_bones = subdivide_bone(armature, bone, divisions)
     next_parent = bone
     
-    print_current_bones(armature)
+    
     
     for i, child_bone in enumerate(new_bones):
         child_bone.use_connect = False
         child_bone.parent = next_parent
+        child_bone.use_deform = True
         
         armature.update_from_editmode()
     
         target_bone = armature.data.edit_bones.new(child_bone.name + '_target')
         target_bone.head.xyz = child_bone.tail.xyz
-        target_bone.tail.xyz = child_bone.tail.xyz + Vector((0, 0.1, 0))
+        target_bone.tail.xyz = child_bone.tail.xyz + (0.1 * bone.z_axis)
         target_bone.parent = bone
+        target_bone.use_deform = False
         
         next_parent = target_bone
         
@@ -85,9 +89,9 @@ class MakeStretchyBoneOperator(bpy.types.Operator):
     def invoke(self, context, event):
         return self.execute(context)
 
-    def execute(self, context):
-        print("Running operator:" + self.bl_idname)
-        make_stretchy_bone(context.selected_editable_bones[0], self.divisions)
+    def execute(self, context: bpy.types.Context):
+        for bone in context.selected_editable_bones:
+            make_stretchy_bone(bone, self.divisions)
         return {'FINISHED'}
 
 
